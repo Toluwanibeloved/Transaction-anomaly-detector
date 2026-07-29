@@ -138,10 +138,11 @@ customer_tab, insights_tab, staff_tab = st.tabs(
 
 with staff_tab:
     st.header("Internal: Upload & Review")
-
-    if st.button("🗑️ Clear all saved data"):
-        reset_all_data()
-        st.success("All data cleared. Upload a new file to start fresh.")
+    uploaded_file = st.file_uploader("Upload your transaction CSV", type="csv")
+    st.caption(
+        "Your CSV must contain exactly two columns with these exact column names: **Value Date** (format DD/MM/YYYY) "
+        "and **Debit (NGN)** (transaction amounts)."
+    )
 
     if st.button("✨ Try with sample data"):
         try:
@@ -179,12 +180,9 @@ with staff_tab:
             st.write("Flagged as unusual:")
             st.dataframe(df[df["flagged"]])
 
-    st.caption(
-        "Your CSV must contain exactly two columns with these exact column names: **Value Date** (format DD/MM/YYYY) "
-        "and **Debit (NGN)** (transaction amounts)."
-    )
-
-    uploaded_file = st.file_uploader("Upload your transaction CSV", type="csv")
+    if st.button("🗑️ Clear all saved data"):
+        reset_all_data()
+        st.success("All data cleared. Upload a new file to start fresh.")
 
     if uploaded_file is not None:
         try:
