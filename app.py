@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import json
 import os
+from datetime import datetime, timedelta
 
 
 class TransactionAnomalyDetector:
@@ -58,6 +59,27 @@ def clean_transactions(raw_df):
         raise ValueError("This file has no transaction rows to analyze.")
 
     return df
+
+def generate_sample_data():
+    """Creates a realistic fake dataset: ~100 days of small everyday transactions,
+    plus 2 unusually large ones, so the app has something to show."""
+    rng = np.random.default_rng(seed=42)
+
+    start_date = datetime(2026, 1, 1)
+    n_days = 100
+
+    dates = [start_date + timedelta(days=int(d)) for d in rng.integers(0, n_days, size=45)]
+    amounts = rng.lognormal(mean=7.5, sigma=0.6, size=45).round(2)
+
+    # Force a couple of obvious outliers so detection has something to catch
+    amounts[10] = 95000.00
+    amounts[30] = 120000.00
+
+    raw_df = pd.DataFrame({
+        "Value Date": [d.strftime("%d/%m/%Y") for d in dates],
+        "Debit (NGN)": amounts
+    })
+    return raw_df.sort_values("Value Date").reset_index(drop=True)
 
 
 def customer_message(flagged):
@@ -120,6 +142,42 @@ with staff_tab:
     if st.button("🗑️ Clear all saved data"):
         reset_all_data()
         st.success("All data cleared. Upload a new file to start fresh.")
+
+    if st.button("✨ Try with sample data"):
+        try:
+            raw_df = generate_sample_data()
+            df = clean_transactions(raw_df)
+        except ValueError as e:
+            st.error(f"⚠️ Sample data failed: {e}")
+        else:
+            date_span_days = (df["date"].max() - df["date"].min()).days
+            enough_history = date_span_days >= MINIMUM_DAYS_REQUIRED
+
+            detector = TransactionAnomalyDetector(threshold=2.0)
+            detector.fit(df["debit_transactions"])
+
+            z_scores, flags = detector.score(df["debit_transactions"])
+            df["z_score"] = z_scores
+            df["flagged"] = flags
+
+            st.session_state["detector"] = detector
+            st.session_state["transactions_df"] = df
+            st.session_state["enough_history"] = enough_history
+
+            df.to_csv(TRANSACTIONS_FILE, index=False)
+            with open(DETECTOR_STATE_FILE, "w") as f:
+                json.dump({
+                    "mean_log": float(detector.mean_log),
+                    "std_log": float(detector.std_log),
+                    "threshold": float(detector.threshold),
+                    "enough_history": bool(enough_history)
+                }, f)
+
+            st.success(f"Sample data loaded — {date_span_days} days of history.")
+            st.write("All transactions, scored:")
+            st.dataframe(df)
+            st.write("Flagged as unusual:")
+            st.dataframe(df[df["flagged"]])
 
     st.caption(
         "Your CSV must contain exactly two columns with these exact column names: **Value Date** (format DD/MM/YYYY) "
