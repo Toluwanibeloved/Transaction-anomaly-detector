@@ -121,6 +121,11 @@ with staff_tab:
         reset_all_data()
         st.success("All data cleared. Upload a new file to start fresh.")
 
+    st.caption(
+        "Your CSV must have these exact column names: **Value Date** (format DD/MM/YYYY) "
+        "and **Debit (NGN)** (transaction amounts)."
+    )
+
     uploaded_file = st.file_uploader("Upload your transaction CSV", type="csv")
 
     if uploaded_file is not None:
