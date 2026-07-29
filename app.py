@@ -62,12 +62,12 @@ def clean_transactions(raw_df):
 
 def customer_message(flagged):
     if flagged:
-        return "⚠️ We noticed a transaction that's unusual for your normal spending pattern. Please verify your identity to continue."
+        return "⚠️ This transaction is unusual based on your normal spending pattern."
     else:
         return "✅ Transaction approved."
 
 
-NO_HISTORY_MESSAGE = "No spending history loaded yet. Insights & anomaly detection would start after three months of usage."
+NO_HISTORY_MESSAGE = "No spending history loaded yet. Upload your transactions at the Internal View tab."
 MINIMUM_DAYS_REQUIRED = 90
 
 # Files we save to, so data survives a restart
@@ -111,7 +111,7 @@ if "transaction_log" not in st.session_state:
 st.title("Transaction Analyst & Anomaly Detector")
 
 customer_tab, insights_tab, staff_tab = st.tabs(
-    ["Customer's Transfer View", "My Spending Analysis", "Internal View"]
+    ["Transfer View", "My Spending Analysis", "Internal View"]
 )
 
 with staff_tab:
@@ -160,8 +160,7 @@ with staff_tab:
             if not enough_history:
                 st.warning(
                     f"This is under the {MINIMUM_DAYS_REQUIRED}-day minimum — "
-                    "customer-facing tabs will stay hidden until there's enough history. "
-                    "Staff can still see everything below."
+                    "Anomaly dectector and anaylst will stay hidden until there's enough history. "
                 )
 
             st.write("All transactions, scored:")
@@ -170,9 +169,9 @@ with staff_tab:
             st.dataframe(df[df["flagged"]])
 
     st.write("---")
-    st.subheader("Live customer activity log")
+    st.subheader("Live activity log")
     if len(st.session_state["transaction_log"]) == 0:
-        st.write("No customer checks yet.")
+        st.write("No checks yet.")
     else:
         log_df = pd.DataFrame(st.session_state["transaction_log"])
         st.dataframe(log_df)
@@ -228,7 +227,7 @@ with insights_tab:
         )
         col3.metric(
             "Your spending max", f"₦{spending_max:,.2f}",
-            help="Transactions above this amount are unusual for your pattern and may trigger extra identity verification."
+            help="Transactions above this amount are unusual for your pattern."
         )
 
         st.subheader("Your spending over time")
