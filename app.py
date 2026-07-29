@@ -122,7 +122,7 @@ with staff_tab:
         st.success("All data cleared. Upload a new file to start fresh.")
 
     st.caption(
-        "Your CSV must have these exact column names: **Value Date** (format DD/MM/YYYY) "
+        "Your CSV must contain exactly two columns with these exact column names: **Value Date** (format DD/MM/YYYY) "
         "and **Debit (NGN)** (transaction amounts)."
     )
 
